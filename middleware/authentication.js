@@ -1,13 +1,24 @@
-const jwt = require("jsonwebtoken");
 const { istokenValid } = require("../utils");
 
 const authenticateUser = async (req, res, next) => {
   const token = req.signedCookies.token;
   if (!token) {
-    console.log("Token e didnt dey");
+    return res.status(401).json({ msg: "auth failed" });
   }
-  console.log("token e dey");
+  try {
+    const { name, userId, role } = istokenValid({ token });
+    req.user = { name, userId, role };
+    next();
+  } catch (error) {
+    return res.status(401).json({ msg: "auth failed" });
+  }
+};
+
+const authorizePermissions = (req, res, next) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ msg: "unauthorized to access this route" });
+  }
   next();
 };
 
-module.exports = { authenticateUser };
+module.exports = { authenticateUser, authorizePermissions };
