@@ -24,11 +24,32 @@ const getSingleUser = async (req, res) => {
 };
 
 const showCurrentUser = async (req, res) => {
-  res.send("Show current user");
+  res.status(200).json({ user: req.user });
 };
 
 const updateUser = async (req, res) => {
-  res.send("Update user");
+  const { email, name } = req.body;
+  if (!email || !name) {
+    return res
+      .status(400)
+      .json({ message: "Please provide all necessarry values" });
+  }
+
+  try {
+    const user = User.findByIdAndUpdate(
+      { _id: req.user.userId },
+      { email, name },
+      {
+        runValidators: true,
+        new: true,
+      }
+    );
+    const tokenUser = createTokenUser(user);
+    attachCookiesToResponse({ res, user: tokenUser });
+    res.status(StatusCodes.OK).json({ user: tokenUser });
+  } catch (error) {
+    res.json({ error });
+  }
 };
 
 const updateUserPassword = async (req, res) => {
